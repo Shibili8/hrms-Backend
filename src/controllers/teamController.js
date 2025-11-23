@@ -87,6 +87,10 @@ export const updateTeam = async (req, res) => {
       return res.status(400).json({ message: "Team name cannot be empty" });
     }
 
+    if (name.trim().length < 2) {
+      return res.status(400).json({ message: "Team name must be at least 2 characters" });
+    }
+
     if (name.trim().length > 50) {
       return res.status(400).json({ message: "Team name cannot exceed 50 characters" });
     }
