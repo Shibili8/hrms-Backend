@@ -81,21 +81,56 @@ export const assignEmployee = async (req, res) => {
   const { employeeId } = req.body;
   const { teamId } = req.params;
 
-  await EmployeeTeam.create({
-    employee_id: employeeId,
-    team_id: teamId
-  });
+  try {
+    // 1️⃣ Check employee exists & belongs to org
+    const employee = await Employee.findOne({
+      where: { id: employeeId, organisation_id: req.user.orgId }
+    });
 
-  await Log.create({
-  organisation_id: req.user.orgId,
-  user_id: req.user.userId,
-  action: `User '${req.user.userId}' assigned employee ${employeeId} to team ${teamId}.`,
-  meta: { employeeId, teamId }   // ← FIXED
-});
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found in your organisation" });
+    }
 
+    // 2️⃣ Check team exists & belongs to org
+    const team = await Team.findOne({
+      where: { id: teamId, organisation_id: req.user.orgId }
+    });
 
-  res.json({ success: true });
+    if (!team) {
+      return res.status(404).json({ message: "Team not found in your organisation" });
+    }
+
+    // 3️⃣ Check if already assigned
+    const existing = await EmployeeTeam.findOne({
+      where: { employee_id: employeeId, team_id: teamId }
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "Employee already assigned to this team" });
+    }
+
+    // 4️⃣ Create assignment
+    await EmployeeTeam.create({
+      employee_id: employeeId,
+      team_id: teamId
+    });
+
+    // 5️⃣ Log
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' assigned employee ${employeeId} to team ${teamId}.`,
+      meta: null
+    });
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("ASSIGN EMPLOYEE ERROR:", err);
+    res.status(500).json({ message: "Assignment failed" });
+  }
 };
+
 
 export const unassignEmployee = async (req, res) => {
   const { employeeId } = req.body;
