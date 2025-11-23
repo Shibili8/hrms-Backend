@@ -1,11 +1,25 @@
 import Team from "../models/Team.js";
 import EmployeeTeam from "../models/EmployeeTeam.js";
+import Employee from "../models/Employee.js";
 import Log from "../models/Log.js";
 
 export const listTeams = async (req, res) => {
   const teams = await Team.findAll({
-    where: { organisation_id: req.user.orgId }
+    where: { organisation_id: req.user.orgId },
+    include: [
+      {
+        model: EmployeeTeam,
+        as: "members",
+        include: [
+          {
+            model: Employee,
+            as: "employee"
+          }
+        ]
+      }
+    ]
   });
+
   res.json(teams);
 };
 
@@ -15,7 +29,6 @@ export const createTeam = async (req, res) => {
     ...req.body
   });
 
-  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -35,7 +48,6 @@ export const updateTeam = async (req, res) => {
 
   await team.update(req.body);
 
-  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -55,7 +67,6 @@ export const deleteTeam = async (req, res) => {
 
   await team.destroy();
 
-  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -75,7 +86,6 @@ export const assignEmployee = async (req, res) => {
     team_id: teamId
   });
 
-  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -94,7 +104,6 @@ export const unassignEmployee = async (req, res) => {
     where: { employee_id: employeeId, team_id: teamId }
   });
 
-  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
