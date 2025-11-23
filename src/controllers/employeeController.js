@@ -2,35 +2,72 @@ import Employee from "../models/Employee.js";
 import Log from "../models/Log.js";
 
 export const listEmployees = async (req, res) => {
-  try {
-    const employees = await Employee.findAll({
-      where: { organisation_id: req.user.orgId },
-    });
+  const employees = await Employee.findAll({
+    where: { organisation_id: req.user.orgId }
+  });
+  res.json(employees);
+};
 
-    res.json(employees);
-  } catch (err) {
-    console.error("Error listing employees:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+export const getEmployee = async (req, res) => {
+  const emp = await Employee.findOne({
+    where: { id: req.params.id, organisation_id: req.user.orgId }
+  });
+
+  if (!emp) return res.status(404).json({ message: "Not found" });
+
+  res.json(emp);
 };
 
 export const createEmployee = async (req, res) => {
-  try {
-    const employee = await Employee.create({
-      organisation_id: req.user.orgId,
-      ...req.body,
-    });
+  const emp = await Employee.create({
+    organisation_id: req.user.orgId,
+    ...req.body
+  });
 
-    await Log.create({
-      organisation_id: req.user.orgId,
-      user_id: req.user.userId,
-      action: "employee_created",
-      meta: { employeeId: employee.id },
-    });
+  await Log.create({
+    organisation_id: req.user.orgId,
+    user_id: req.user.userId,
+    action: "employee_created",
+    meta: { employeeId: emp.id }
+  });
 
-    res.status(201).json(employee);
-  } catch (err) {
-    console.error("Error creating employee:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(201).json(emp);
+};
+
+export const updateEmployee = async (req, res) => {
+  const emp = await Employee.findOne({
+    where: { id: req.params.id, organisation_id: req.user.orgId }
+  });
+
+  if (!emp) return res.status(404).json({ message: "Not found" });
+
+  await emp.update(req.body);
+
+  await Log.create({
+    organisation_id: req.user.orgId,
+    user_id: req.user.userId,
+    action: "employee_updated",
+    meta: { employeeId: emp.id }
+  });
+
+  res.json(emp);
+};
+
+export const deleteEmployee = async (req, res) => {
+  const emp = await Employee.findOne({
+    where: { id: req.params.id, organisation_id: req.user.orgId }
+  });
+
+  if (!emp) return res.status(404).json({ message: "Not found" });
+
+  await emp.destroy();
+
+  await Log.create({
+    organisation_id: req.user.orgId,
+    user_id: req.user.userId,
+    action: "employee_deleted",
+    meta: { employeeId: req.params.id }
+  });
+
+  res.json({ success: true });
 };

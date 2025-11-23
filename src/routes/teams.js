@@ -3,7 +3,10 @@ import { authMiddleware } from "../middlewares/authMiddleware.js";
 import {
   listTeams,
   createTeam,
-  assignEmployee
+  updateTeam,
+  deleteTeam,
+  assignEmployee,
+  unassignEmployee
 } from "../controllers/teamController.js";
 
 const router = express.Router();
@@ -12,6 +15,10 @@ router.use(authMiddleware);
 
 router.get("/", listTeams);
 router.post("/", createTeam);
+router.put("/:id", updateTeam);
+router.delete("/:id", deleteTeam);
+
 router.post("/:teamId/assign", assignEmployee);
+router.post("/:teamId/unassign", unassignEmployee);
 
 export default router;
