@@ -136,9 +136,17 @@ export const unassignEmployee = async (req, res) => {
   const { employeeId } = req.body;
   const { teamId } = req.params;
 
-  await EmployeeTeam.destroy({
+  if (!employeeId) {
+    return res.status(400).json({ message: "employeeId is required" });
+  }
+
+  const deleted = await EmployeeTeam.destroy({
     where: { employee_id: employeeId, team_id: teamId }
   });
+
+  if (!deleted) {
+    return res.status(404).json({ message: "Assignment not found" });
+  }
 
   await Log.create({
     organisation_id: req.user.orgId,
