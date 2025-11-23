@@ -15,10 +15,7 @@ const app = express();
 
 
 app.use(express.json());
-app.use(cors({
-  origin: "https://hrms-backend-4-zf5z.onrender.com/api", 
-  credentials: true   
-}));
+app.use(cors());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
