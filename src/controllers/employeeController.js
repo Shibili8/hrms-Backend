@@ -1,19 +1,24 @@
 import Employee from "../models/Employee.js";
 import Log from "../models/Log.js";
+import { Op } from "sequelize";
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
 export const listEmployees = async (req, res) => {
   const employees = await Employee.findAll({
-    where: { organisation_id: req.user.orgId }
+    where: { organisation_id: req.user.orgId },
   });
   res.json(employees);
 };
 
 export const getEmployee = async (req, res) => {
   const emp = await Employee.findOne({
-    where: { id: req.params.id, organisation_id: req.user.orgId }
+    where: { id: req.params.id, organisation_id: req.user.orgId },
   });
 
-  if (!emp) return res.status(404).json({ message: "Not found" });
+  if (!emp) return res.status(404).json({ message: "Employee not found" });
 
   res.json(emp);
 };
@@ -21,110 +26,139 @@ export const getEmployee = async (req, res) => {
 export const createEmployee = async (req, res) => {
   const { first_name, last_name, email, phone } = req.body;
 
-  if (!first_name?.trim()) {
-    return res.status(400).json({ message: "First name is required" });
+  try {
+    if (!first_name || !first_name.trim()) {
+      return res.status(400).json({ message: "First name is required" });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const existing = await Employee.findOne({
+      where: {
+        email,
+        organisation_id: req.user.orgId,
+      },
+    });
+
+    if (existing) {
+      return res
+        .status(409)
+        .json({ message: "Employee email already exists in this organisation" });
+    }
+
+    const emp = await Employee.create({
+      organisation_id: req.user.orgId,
+      first_name,
+      last_name,
+      email,
+      phone,
+    });
+
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' created employee ${emp.id}.`,
+      meta: null,
+    });
+
+    res.status(201).json(emp);
+  } catch (err) {
+    console.error("Create employee error:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to create employee. Please try again." });
   }
-  if (!last_name?.trim()) {
-    return res.status(400).json({ message: "Last name is required" });
-  }
-  if (!email?.trim()) {
-    return res.status(400).json({ message: "Email is required" });
-  }
-
-  const emailRegex = /\S+@\S+\.\S+/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ message: "Invalid email format" });
-  }
-
-  const existing = await Employee.findOne({
-    where: { email, organisation_id: req.user.orgId }
-  });
-
-  if (existing) {
-    return res.status(400).json({ message: "Email already exists" });
-  }
-
-  const emp = await Employee.create({
-    organisation_id: req.user.orgId,
-    first_name,
-    last_name,
-    email,
-    phone
-  });
-
-  await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' created employee ${emp.id}.`,
-  });
-
-  res.status(201).json(emp);
 };
 
 export const updateEmployee = async (req, res) => {
-  const { first_name, last_name, email } = req.body;
+  const { first_name, last_name, email, phone } = req.body;
 
-  if (!first_name?.trim()) {
-    return res.status(400).json({ message: "First name is required" });
-  }
-  if (!last_name?.trim()) {
-    return res.status(400).json({ message: "Last name is required" });
-  }
-  if (!email?.trim()) {
-    return res.status(400).json({ message: "Email is required" });
-  }
+  try {
+    const emp = await Employee.findOne({
+      where: { id: req.params.id, organisation_id: req.user.orgId },
+    });
 
-  const emailRegex = /\S+@\S+\.\S+/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ message: "Invalid email format" });
-  }
-
-  const emp = await Employee.findOne({
-    where: { id: req.params.id, organisation_id: req.user.orgId }
-  });
-
-  if (!emp) return res.status(404).json({ message: "Employee not found" });
-
-  const duplicate = await Employee.findOne({
-    where: {
-      email,
-      organisation_id: req.user.orgId,
-      id: { $ne: emp.id }
+    if (!emp) {
+      return res.status(404).json({ message: "Employee not found" });
     }
-  });
 
-  if (duplicate) {
-    return res.status(400).json({ message: "Email already exists" });
+    if (!first_name || !first_name.trim()) {
+      return res.status(400).json({ message: "First name is required" });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const duplicate = await Employee.findOne({
+      where: {
+        email,
+        organisation_id: req.user.orgId,
+        id: { [Op.ne]: emp.id },
+      },
+    });
+
+    if (duplicate) {
+      return res
+        .status(409)
+        .json({ message: "Employee email already exists in this organisation" });
+    }
+
+    await emp.update({
+      first_name,
+      last_name,
+      email,
+      phone,
+    });
+
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' updated employee ${emp.id}.`,
+      meta: null,
+    });
+
+    res.json(emp);
+  } catch (err) {
+    console.error("Update employee error:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to update employee. Please try again." });
   }
-
-  await emp.update(req.body);
-
-  await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' updated employee ${emp.id}.`,
-  });
-
-  res.json(emp);
 };
 
-
 export const deleteEmployee = async (req, res) => {
-  const emp = await Employee.findOne({
-    where: { id: req.params.id, organisation_id: req.user.orgId }
-  });
+  try {
+    const emp = await Employee.findOne({
+      where: { id: req.params.id, organisation_id: req.user.orgId },
+    });
 
-  if (!emp) return res.status(404).json({ message: "Not found" });
+    if (!emp) return res.status(404).json({ message: "Employee not found" });
 
-  await emp.destroy();
+    await emp.destroy();
 
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' deleted employee ${req.params.id}.`,
+      meta: null,
+    });
 
-  await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' deleted employee ${req.params.id}.`,
-    meta: null
-  });
-
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete employee error:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to delete employee. Please try again." });
+  }
 };
