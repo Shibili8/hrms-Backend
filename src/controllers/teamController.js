@@ -24,39 +24,100 @@ export const listTeams = async (req, res) => {
 };
 
 export const createTeam = async (req, res) => {
-  const team = await Team.create({
-    organisation_id: req.user.orgId,
-    ...req.body
-  });
+  try {
+    const { name, description } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Team name cannot be empty" });
+    }
 
-  await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' created team ${team.id}.`,
-    meta: null
-  });
+    if (name.trim().length < 2) {
+      return res.status(400).json({ message: "Team name must be at least 2 characters" });
+    }
 
-  res.status(201).json(team);
+    if (name.trim().length > 50) {
+      return res.status(400).json({ message: "Team name cannot exceed 50 characters" });
+    }
+
+    const existing = await Team.findOne({
+      where: {
+        organisation_id: req.user.orgId,
+        name: name.trim()
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "A team with this name already exists" });
+    }
+
+    const team = await Team.create({
+      organisation_id: req.user.orgId,
+      name: name.trim(),
+      description: description || ""
+    });
+
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' created team ${team.id}.`,
+      meta: null
+    });
+
+    return res.status(201).json(team);
+
+  } catch (err) {
+    console.error("Create team error:", err);
+    res.status(500).json({ message: "Failed to create team" });
+  }
 };
+
 
 export const updateTeam = async (req, res) => {
-  const team = await Team.findOne({
-    where: { id: req.params.id, organisation_id: req.user.orgId }
-  });
+  try {
+    const { name, description } = req.body;
+    const { id } = req.params;
 
-  if (!team) return res.status(404).json({ message: "Not found" });
+    const team = await Team.findOne({
+      where: { id, organisation_id: req.user.orgId }
+    });
 
-  await team.update(req.body);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Team name cannot be empty" });
+    }
 
-  await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' updated team ${team.id}.`,
-    meta: null
-  });
+    const duplicate = await Team.findOne({
+      where: {
+        organisation_id: req.user.orgId,
+        name: name.trim(),
+      }
+    });
 
-  res.json(team);
+    if (duplicate && duplicate.id !== team.id) {
+      return res.status(400).json({ message: "Another team already uses this name" });
+    }
+
+    await team.update({
+      name: name.trim(),
+      description: description || ""
+    });
+
+    await Log.create({
+      organisation_id: req.user.orgId,
+      user_id: req.user.userId,
+      action: `User '${req.user.userId}' updated team ${team.id}.`,
+      meta: null
+    });
+
+    return res.json(team);
+
+  } catch (err) {
+    console.error("Update team error:", err);
+    res.status(500).json({ message: "Failed to update team" });
+  }
 };
+
 
 export const deleteTeam = async (req, res) => {
   const team = await Team.findOne({
