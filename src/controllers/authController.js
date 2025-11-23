@@ -25,6 +25,13 @@ export const register = async (req, res) => {
       { expiresIn: "8h" }
     );
 
+    res.cookie("token", token, {
+      httpOnly: false,     // react needs access
+      secure: true,        // required for https (Render)
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     await Log.create({
   organisation_id: org.id,
   user_id: user.id,
@@ -58,6 +65,12 @@ export const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "8h" }
     );
+    res.cookie("token", token, {
+      httpOnly: false,     // react needs access
+      secure: true,        // required for https (Render)
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     await Log.create({
       organisation_id: user.organisation_id,
