@@ -6,7 +6,6 @@ export const listTeams = async (req, res) => {
   const teams = await Team.findAll({
     where: { organisation_id: req.user.orgId }
   });
-
   res.json(teams);
 };
 
@@ -16,11 +15,12 @@ export const createTeam = async (req, res) => {
     ...req.body
   });
 
+  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "team_created",
-    meta: { teamId: team.id }
+    action: `User '${req.user.userId}' created team ${team.id}.`,
+    meta: null
   });
 
   res.status(201).json(team);
@@ -35,11 +35,12 @@ export const updateTeam = async (req, res) => {
 
   await team.update(req.body);
 
+  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "team_updated",
-    meta: { teamId: team.id }
+    action: `User '${req.user.userId}' updated team ${team.id}.`,
+    meta: null
   });
 
   res.json(team);
@@ -54,11 +55,12 @@ export const deleteTeam = async (req, res) => {
 
   await team.destroy();
 
+  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "team_deleted",
-    meta: { teamId: req.params.id }
+    action: `User '${req.user.userId}' deleted team ${req.params.id}.`,
+    meta: null
   });
 
   res.json({ success: true });
@@ -68,13 +70,17 @@ export const assignEmployee = async (req, res) => {
   const { employeeId } = req.body;
   const { teamId } = req.params;
 
-  await EmployeeTeam.create({ employee_id: employeeId, team_id: teamId });
+  await EmployeeTeam.create({
+    employee_id: employeeId,
+    team_id: teamId
+  });
 
+  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "employee_assigned_to_team",
-    meta: { employeeId, teamId }
+    action: `User '${req.user.userId}' assigned employee ${employeeId} to team ${teamId}.`,
+    meta: null
   });
 
   res.json({ success: true });
@@ -88,11 +94,12 @@ export const unassignEmployee = async (req, res) => {
     where: { employee_id: employeeId, team_id: teamId }
   });
 
+  // ⭐ Readable log
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "employee_unassigned_from_team",
-    meta: { employeeId, teamId }
+    action: `User '${req.user.userId}' unassigned employee ${employeeId} from team ${teamId}.`,
+    meta: null
   });
 
   res.json({ success: true });

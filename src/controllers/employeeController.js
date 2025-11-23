@@ -24,11 +24,12 @@ export const createEmployee = async (req, res) => {
     ...req.body
   });
 
+  // ⭐ Log in required readable format
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "employee_created",
-    meta: { employeeId: emp.id }
+    action: `User '${req.user.userId}' created employee ${emp.id}.`,
+    meta: null
   });
 
   res.status(201).json(emp);
@@ -43,11 +44,12 @@ export const updateEmployee = async (req, res) => {
 
   await emp.update(req.body);
 
+  // ⭐ Log readable update message
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "employee_updated",
-    meta: { employeeId: emp.id }
+    action: `User '${req.user.userId}' updated employee ${emp.id}.`,
+    meta: null
   });
 
   res.json(emp);
@@ -62,11 +64,12 @@ export const deleteEmployee = async (req, res) => {
 
   await emp.destroy();
 
+  // ⭐ Log readable delete message
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
-    action: "employee_deleted",
-    meta: { employeeId: req.params.id }
+    action: `User '${req.user.userId}' deleted employee ${req.params.id}.`,
+    meta: null
   });
 
   res.json({ success: true });

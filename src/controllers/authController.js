@@ -26,11 +26,11 @@ export const register = async (req, res) => {
     );
 
     await Log.create({
-      organisation_id: org.id,
-      user_id: user.id,
-      action: "organisation_registered",
-      meta: { email },
-    });
+  organisation_id: org.id,
+  user_id: user.id,
+  action: `User '${user.id}' created organisation ${org.id}.`,
+  meta: null
+});
 
     res.status(201).json({ token });
   } catch (e) {
@@ -62,9 +62,10 @@ export const login = async (req, res) => {
     await Log.create({
       organisation_id: user.organisation_id,
       user_id: user.id,
-      action: "login",
-      meta: { email },
+      action: `User '${user.id}' logged in.`,
+      meta: null
     });
+
 
     res.json({ token });
   } catch (err) {
