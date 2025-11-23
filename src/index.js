@@ -2,6 +2,7 @@ import express from "express";
 import sequelize from "./db.js";
 import dotenv from "dotenv";
 import "./models/associations.js"; // Auto-load associations
+import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
 import employeeRoutes from "./routes/employees.js";
@@ -14,7 +15,11 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
+app.use(cors({
+  origin: "*",   // Allow all frontend URLs for now
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization"
+}));
 // Debug
 console.log("ENV USER =", process.env.DB_USER);
 
