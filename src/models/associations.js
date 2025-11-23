@@ -24,7 +24,8 @@ Organisation.hasMany(Team, { foreignKey: "organisation_id" });
 // EmployeeTeam belongs to Employee
 EmployeeTeam.belongsTo(Employee, {
   foreignKey: "employee_id",
-  as: "employee"
+  as: "employee",
+  include: ["employee"]
 });
 
 // EmployeeTeam belongs to Team

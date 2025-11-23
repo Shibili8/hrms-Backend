@@ -87,11 +87,12 @@ export const assignEmployee = async (req, res) => {
   });
 
   await Log.create({
-    organisation_id: req.user.orgId,
-    user_id: req.user.userId,
-    action: `User '${req.user.userId}' assigned employee ${employeeId} to team ${teamId}.`,
-    meta: null
-  });
+  organisation_id: req.user.orgId,
+  user_id: req.user.userId,
+  action: `User '${req.user.userId}' assigned employee ${employeeId} to team ${teamId}.`,
+  meta: { employeeId, teamId }   // ← FIXED
+});
+
 
   res.json({ success: true });
 };
