@@ -1,7 +1,7 @@
 import express from "express";
 import sequelize from "./db.js";
 import dotenv from "dotenv";
-import "./models/associations.js"; // Auto-load associations
+import "./models/associations.js"; 
 import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
@@ -13,20 +13,14 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+
 app.use(express.json());
 app.use(cors());
-// Debug
-console.log("ENV USER =", process.env.DB_USER);
 
-// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/logs", logRoutes);
-
-// Health check
-app.get("/api/health", (_, res) => res.send({ status: "ok" }));
 
 const PORT = process.env.PORT || 5000;
 

@@ -82,7 +82,7 @@ export const assignEmployee = async (req, res) => {
   const { teamId } = req.params;
 
   try {
-    // 1️⃣ Check employee exists & belongs to org
+
     const employee = await Employee.findOne({
       where: { id: employeeId, organisation_id: req.user.orgId }
     });
@@ -91,7 +91,7 @@ export const assignEmployee = async (req, res) => {
       return res.status(404).json({ message: "Employee not found in your organisation" });
     }
 
-    // 2️⃣ Check team exists & belongs to org
+
     const team = await Team.findOne({
       where: { id: teamId, organisation_id: req.user.orgId }
     });
@@ -100,7 +100,7 @@ export const assignEmployee = async (req, res) => {
       return res.status(404).json({ message: "Team not found in your organisation" });
     }
 
-    // 3️⃣ Check if already assigned
+
     const existing = await EmployeeTeam.findOne({
       where: { employee_id: employeeId, team_id: teamId }
     });
@@ -109,7 +109,7 @@ export const assignEmployee = async (req, res) => {
       return res.status(400).json({ message: "Employee already assigned to this team" });
     }
 
-    // 4️⃣ Create assignment
+
     await EmployeeTeam.create({
       employee_id: employeeId,
       team_id: teamId

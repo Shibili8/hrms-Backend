@@ -18,7 +18,6 @@ router.post("/", createTeam);
 router.put("/:id", updateTeam);
 router.delete("/:id", deleteTeam);
 
-// ⭐ Add these
 router.post("/:teamId/assign", assignEmployee);
 router.delete("/:teamId/unassign", unassignEmployee);  // <— THIS WAS MISSING
 

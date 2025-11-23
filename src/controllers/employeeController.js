@@ -24,7 +24,7 @@ export const createEmployee = async (req, res) => {
     ...req.body
   });
 
-  // ⭐ Log in required readable format
+
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -44,7 +44,7 @@ export const updateEmployee = async (req, res) => {
 
   await emp.update(req.body);
 
-  // ⭐ Log readable update message
+
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
@@ -64,7 +64,7 @@ export const deleteEmployee = async (req, res) => {
 
   await emp.destroy();
 
-  // ⭐ Log readable delete message
+
   await Log.create({
     organisation_id: req.user.orgId,
     user_id: req.user.userId,
