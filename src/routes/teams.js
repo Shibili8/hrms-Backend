@@ -18,7 +18,8 @@ router.post("/", createTeam);
 router.put("/:id", updateTeam);
 router.delete("/:id", deleteTeam);
 
+// ⭐ Add these
 router.post("/:teamId/assign", assignEmployee);
-router.post("/:teamId/unassign", unassignEmployee);
+router.delete("/:teamId/unassign", unassignEmployee);  // <— THIS WAS MISSING
 
 export default router;
